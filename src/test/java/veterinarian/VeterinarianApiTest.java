@@ -79,7 +79,6 @@ public class VeterinarianApiTest {
             .then()
             .statusCode(anyOf(is(200), is(204)));
 
-        // 🔥 BONUS CHECK (ОВДЕ!)
         given()
             .auth().basic("admin", "admin")
             .when()
