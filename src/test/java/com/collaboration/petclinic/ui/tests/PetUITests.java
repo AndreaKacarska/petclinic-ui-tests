@@ -9,38 +9,20 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 import java.time.Duration;
 import java.time.LocalDate;
 
-/**
- * UI TESTS — Add Pet for Specific Owner
- * Student 3
- * Prerequisites:
- * - Backend running on localhost:9966
- * - Frontend running on localhost:4200
- * - Owner with ID 1 (George Franklin) exists
- *
- * KNOWN BUGS IDENTIFIED DURING TESTING:
- *
- * BUG002: No error message shown when future birth date is entered
- *   - Steps: Navigate to Add Pet form, enter future date, click Save
- *   - Expected: Error message "Birth date cannot be in the future"
- *   - Actual: Form silently refuses to submit, no feedback to user
- *   - Test: TC003_BUG (intentionally failing to document this bug)
- *
- * BUG003: Required fields show no validation messages on empty submit
- *   - Steps: Navigate to Add Pet form, leave fields empty, click Save
- *   - Expected: Each field shows "This field is required"
- *   - Actual: Nothing happens, no messages shown
- *
- * BUG004: Pet name accepts special characters and numbers
- *   - Needs clarification from team whether this is intended behavior
- *
- * BUG005: Duplicate pet names allowed for same owner
- *   - Needs clarification from team whether this is intended behavior
- *
- */
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class PetUITests extends BaseTest {
 
     private WebDriverWait wait;
+    private static final By ADD_NEW_PET_BUTTON = By.xpath("//button[contains(text(),'Add New Pet')]");
+    private static final By SUBMIT_BUTTON = By.xpath("//button[@type='submit']");
+    private static final By EDIT_PET_BUTTON = By.xpath("//button[contains(text(),'Edit Pet')]");
+    private static final By DELETE_PET_BUTTONS = By.xpath("//button[contains(text(),'Delete Pet')]");
+    private static final By FIRST_DELETE_PET_BUTTON = By.xpath("(//button[contains(text(),'Delete Pet')])[1]");
+    private static final By NAME_INPUT = By.id("name");
+    private static final By BIRTH_DATE_INPUT = By.name("birthDate");
+    private static final By PET_TYPE_DROPDOWN = By.id("type");
+    private static final By VALIDATION_HELP_BLOCK = By.className("help-block");
+    private static final By VALIDATION_ALERT_DANGER = By.className("alert-danger");
 
     @BeforeEach
     void localSetup() {
@@ -51,35 +33,22 @@ public class PetUITests extends BaseTest {
     @Order(1)
     @DisplayName("TC001 - Add a new pet successfully")
     void testAddPetSuccessfully() {
+        addPetForOwner1("BuddyUI", "2022/05/15", "dog");
+        wait.until(ExpectedConditions.urlContains("/owners/1"));
         navigateToOwner1();
-        clickAddNewPet();
-        fillForm("BuddyUI", "2022/05/15", "dog");
-        submitForm();
-
-        sleep(2000);
-        navigateToOwner1();
-        Assertions.assertTrue(
-                driver.getPageSource().contains("BuddyUI"),
-                "Newly created pet should appear on owner's page"
-        );
+        waitForOwnerPageLoaded();
+        assertPageContains("BuddyUI", "Expected newly created pet 'BuddyUI' on owner details page");
     }
-
     @Test
     @Order(2)
     @DisplayName("TC002 - Add a pet with today's birth date")
     void testAddPetWithTodayDate() {
         String today = LocalDate.now().toString().replace("-", "/");
+        addPetForOwner1("RexUI", today, "cat");
+        wait.until(ExpectedConditions.urlContains("/owners/1"));
         navigateToOwner1();
-        clickAddNewPet();
-        fillForm("RexUI", today, "cat");
-        submitForm();
-
-        sleep(2000);
-        navigateToOwner1();
-        Assertions.assertTrue(
-                driver.getPageSource().contains("RexUI"),
-                "Pet with today's birth date should be created successfully"
-        );
+        waitForOwnerPageLoaded();
+        assertPageContains("RexUI", "Expected pet 'RexUI' with today's birth date on owner details page");
     }
 
     // This test documents that the system currently ALLOWS spec. char
@@ -88,36 +57,22 @@ public class PetUITests extends BaseTest {
     @Order(3)
     @DisplayName("TC005 - Add a pet with special characters in name")
     void testAddPetSpecialChars() {
+        addPetForOwner1("#!@123", "2024/01/15", "bird");
+        wait.until(ExpectedConditions.urlContains("/owners/1"));
         navigateToOwner1();
-        clickAddNewPet();
-        fillForm("#!@123", "2024/01/15", "bird");
-        submitForm();
-
-        sleep(3000);
-        navigateToOwner1();
-        sleep(2000);
-        Assertions.assertTrue(
-                driver.getPageSource().contains("123"),
-                "System currently allows special characters - needs clarification BUG004"
-        );
+        waitForOwnerPageLoaded();
+        assertPageContains("123", "Expected persisted pet name containing '123' for BUG004 tracking");
     }
-    // This test documents that duplicates ARE currently allowed
-    // Linked to BUG005 - needs clarification from team
+
     @Test
     @Order(4)
     @DisplayName("TC008 - Add duplicate pet name for same owner")
     void testAddDuplicatePetName() {
+        addPetForOwner1("BellaUI", "2024/01/15", "cat");
+        wait.until(ExpectedConditions.urlContains("/owners/1"));
         navigateToOwner1();
-        clickAddNewPet();
-        fillForm("BellaUI", "2024/01/15", "cat");
-        submitForm();
-
-        sleep(2000);
-        navigateToOwner1();
-        Assertions.assertTrue(
-                driver.getPageSource().contains("BellaUI"),
-                "System currently allows duplicate pet names for same owner - needs clarification"
-        );
+        waitForOwnerPageLoaded();
+        assertPageContains("BellaUI", "Expected duplicate pet name 'BellaUI' to be visible (current behavior)");
     }
 
     @Test
@@ -128,20 +83,20 @@ public class PetUITests extends BaseTest {
         clickAddNewPet();
 
         WebElement nameInput = wait.until(
-                ExpectedConditions.visibilityOfElementLocated(By.id("name")));
+                ExpectedConditions.visibilityOfElementLocated(NAME_INPUT));
         nameInput.sendKeys("   ");
 
-        driver.findElement(By.name("birthDate")).click();
+        driver.findElement(BIRTH_DATE_INPUT).click();
 
         WebElement error = wait.until(
-                ExpectedConditions.visibilityOfElementLocated(By.className("help-block")));
+                ExpectedConditions.visibilityOfElementLocated(VALIDATION_HELP_BLOCK));
         Assertions.assertTrue(
                 error.isDisplayed(),
-                "Validation error should appear for whitespace name"
+                "Expected validation error to be visible for whitespace-only pet name"
         );
         Assertions.assertFalse(
                 error.getText().isEmpty(),
-                "Validation message should not be empty"
+                "Expected non-empty validation message for whitespace-only pet name"
         );
     }
 
@@ -151,15 +106,13 @@ public class PetUITests extends BaseTest {
     void testMissingBirthDate() {
         navigateToOwner1();
         clickAddNewPet();
-
-        wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("name")))
+        wait.until(ExpectedConditions.visibilityOfElementLocated(NAME_INPUT))
                 .sendKeys("NoDatePet");
 
-        WebElement submitBtn = driver.findElement(
-                By.xpath("//button[@type='submit']"));
+        WebElement submitBtn = wait.until(ExpectedConditions.visibilityOfElementLocated(SUBMIT_BUTTON));
         Assertions.assertFalse(
                 submitBtn.isEnabled(),
-                "Submit button should be disabled when birth date is missing"
+                "Expected submit button to stay disabled when birth date is missing"
         );
     }
 
@@ -169,38 +122,30 @@ public class PetUITests extends BaseTest {
     void testViewExistingPet() {
         navigateToOwner1();
 
-        sleep(3000);
+        waitForOwnerPageLoaded();
         String pageSource = driver.getPageSource();
         Assertions.assertTrue(
                 pageSource.contains("Franklin") ||
                         pageSource.contains("Pets and Visits") ||
                         pageSource.contains("2010"),
-                "Owner page should show pet information"
+                "Expected owner page to show existing pet information"
         );
     }
 
     @Test
     @Order(8)
     @DisplayName("TC013 - Edit an existing pet's name")
-        // NOTE: This test renames Leo to LeoUpdated
-        // TC011 must account for this change
     void testEditPet() {
         navigateToOwner1();
-
         wait.until(ExpectedConditions.elementToBeClickable(
-                By.xpath("//button[contains(text(),'Edit Pet')]"))).click();
-
+                EDIT_PET_BUTTON)).click();
         WebElement nameInput = wait.until(
-                ExpectedConditions.visibilityOfElementLocated(By.id("name")));
+                ExpectedConditions.visibilityOfElementLocated(NAME_INPUT));
         nameInput.clear();
         nameInput.sendKeys("LeoUpdated");
         submitForm();
-
         wait.until(ExpectedConditions.urlContains("/owners/1"));
-        Assertions.assertTrue(
-                driver.getPageSource().contains("LeoUpdated"),
-                "Pet name should be updated to LeoUpdated"
-        );
+        assertPageContains("LeoUpdated", "Expected edited pet name 'LeoUpdated' on owner details page");
     }
 
     @Test
@@ -208,31 +153,30 @@ public class PetUITests extends BaseTest {
     @DisplayName("TC014 - Delete a pet")
     void testDeletePet() {
         navigateToOwner1();
-        sleep(2000);
+        waitForOwnerPageLoaded();
 
         WebElement deleteBtn = wait.until(ExpectedConditions.presenceOfElementLocated(
-                By.xpath("(//button[contains(text(),'Delete Pet')])[1]")));
+                FIRST_DELETE_PET_BUTTON));
 
         ((org.openqa.selenium.JavascriptExecutor) driver)
                 .executeScript("arguments[0].scrollIntoView(true);", deleteBtn);
-        sleep(500);
+        wait.until(ExpectedConditions.elementToBeClickable(deleteBtn));
 
         int petCountBefore = driver.findElements(
-                By.xpath("//button[contains(text(),'Delete Pet')]")).size();
+                DELETE_PET_BUTTONS).size();
 
         ((org.openqa.selenium.JavascriptExecutor) driver)
                 .executeScript("arguments[0].click();", deleteBtn);
 
-        sleep(2000);
         navigateToOwner1();
-        sleep(1000);
+        wait.until(ExpectedConditions.numberOfElementsToBeLessThan(DELETE_PET_BUTTONS, petCountBefore));
 
         int petCountAfter = driver.findElements(
-                By.xpath("//button[contains(text(),'Delete Pet')]")).size();
+                DELETE_PET_BUTTONS).size();
 
         Assertions.assertTrue(
                 petCountAfter < petCountBefore,
-                "Number of pets should decrease after deletion"
+                "Expected pet count to decrease after deletion (before=" + petCountBefore + ", after=" + petCountAfter + ")"
         );
     }
 
@@ -240,14 +184,11 @@ public class PetUITests extends BaseTest {
     @Test
     @Order(10)
     @DisplayName("TC003_BUG - Future date should show error message - KNOWN BUG002")
-        // BUG002: When a future birth date is entered, the form silently prevents
-        // saving but shows NO error message to the user.
     void testFutureDateShouldShowErrorMessage() {
         navigateToOwner1();
         clickAddNewPet();
         fillForm("Futuristico", "2029/01/01", "dog");
         submitForm();
-        sleep(1000);
 
         WebElement errorMessage = wait.until(
                 ExpectedConditions.visibilityOfElementLocated(
@@ -258,8 +199,82 @@ public class PetUITests extends BaseTest {
         );
         Assertions.assertTrue(
                 errorMessage.isDisplayed(),
-                "BUG002: No error message shown when future birth date is entered"
+                "BUG002: Expected an error message when future birth date is submitted"
         );
+    }
+
+    @Test
+    @Order(11)
+    @DisplayName("TC016 - Add pet with valid leap-day birth date")
+    void testAddPetWithValidLeapDayDate() {
+        String leapPetName = "LeapDayUI";
+
+        navigateToOwner1();
+        clickAddNewPet();
+        fillForm(leapPetName, "2024/02/29", "dog");
+        submitForm();
+
+        wait.until(ExpectedConditions.urlContains("/owners/1"));
+        assertPageContains(leapPetName, "Expected leap-day pet '" + leapPetName + "' to be created");
+    }
+
+    @Test
+    @Order(12)
+    @DisplayName("TC017 - Reject non-leap-year February 29 date")
+    void testAddPetWithInvalidNonLeapDate() {
+        String invalidDatePetName = "InvalidLeapUI";
+
+        navigateToOwner1();
+        clickAddNewPet();
+        fillForm(invalidDatePetName, "2023/02/29", "cat");
+        submitForm();
+
+        waitForValidationFeedbackOnForm();
+        Assertions.assertTrue(
+                isOnAddPetForm() && hasValidationFeedback(),
+                "Expected Add Pet form validation for invalid non-leap date, but URL was: " + driver.getCurrentUrl()
+        );
+
+        navigateToOwner1();
+        waitForOwnerPageLoaded();
+        assertPageNotContains(invalidDatePetName,
+                "Expected no pet created for invalid non-leap date: " + invalidDatePetName);
+    }
+
+    @Test
+    @Order(13)
+    @DisplayName("TC018 - Reject unsupported birth date format")
+    void testAddPetWithUnsupportedDateFormat() {
+        String invalidFormatPetName = "FormatEdgeUI";
+
+        navigateToOwner1();
+        clickAddNewPet();
+
+        wait.until(ExpectedConditions.visibilityOfElementLocated(NAME_INPUT))
+                .sendKeys(invalidFormatPetName);
+        WebElement dateInput = wait.until(ExpectedConditions.visibilityOfElementLocated(
+                BIRTH_DATE_INPUT));
+        dateInput.clear();
+        dateInput.sendKeys("15-05-2022");
+
+        WebElement typeDropdown = wait.until(
+                ExpectedConditions.presenceOfElementLocated(PET_TYPE_DROPDOWN));
+        org.openqa.selenium.support.ui.Select select =
+                new org.openqa.selenium.support.ui.Select(typeDropdown);
+        select.selectByVisibleText("bird");
+
+        submitForm();
+
+        waitForValidationFeedbackOnForm();
+        Assertions.assertTrue(
+                isOnAddPetForm() && hasValidationFeedback(),
+                "Expected Add Pet form validation for unsupported date format, but URL was: " + driver.getCurrentUrl()
+        );
+
+        navigateToOwner1();
+        waitForOwnerPageLoaded();
+        assertPageNotContains(invalidFormatPetName,
+                "Expected no pet created for unsupported date format: " + invalidFormatPetName);
     }
 
 
@@ -267,37 +282,70 @@ public class PetUITests extends BaseTest {
         driver.get(BASE_URL + "/owners/1");
     }
 
+    private void addPetForOwner1(String name, String date, String type) {
+        navigateToOwner1();
+        clickAddNewPet();
+        fillForm(name, date, type);
+        submitForm();
+    }
+
+    private void waitForOwnerPageLoaded() {
+        wait.until(ExpectedConditions.visibilityOfElementLocated(ADD_NEW_PET_BUTTON));
+    }
+
     private void clickAddNewPet() {
-        wait.until(ExpectedConditions.elementToBeClickable(
-                By.xpath("//button[contains(text(),'Add New Pet')]"))).click();
+        wait.until(ExpectedConditions.elementToBeClickable(ADD_NEW_PET_BUTTON)).click();
     }
 
     private void fillForm(String name, String date, String type) {
         WebElement nameInput = wait.until(
-                ExpectedConditions.visibilityOfElementLocated(By.id("name")));
+                ExpectedConditions.visibilityOfElementLocated(NAME_INPUT));
         nameInput.clear();
         nameInput.sendKeys(name);
 
-        WebElement dateInput = driver.findElement(By.name("birthDate"));
+        WebElement dateInput = wait.until(
+                ExpectedConditions.visibilityOfElementLocated(BIRTH_DATE_INPUT));
         dateInput.clear();
         dateInput.sendKeys(date);
 
         WebElement typeDropdown = wait.until(
-                ExpectedConditions.presenceOfElementLocated(By.id("type")));
+                ExpectedConditions.presenceOfElementLocated(PET_TYPE_DROPDOWN));
         org.openqa.selenium.support.ui.Select select =
                 new org.openqa.selenium.support.ui.Select(typeDropdown);
         select.selectByVisibleText(type);
     }
 
     private void submitForm() {
-        driver.findElement(By.xpath("//button[@type='submit']")).click();
+        wait.until(ExpectedConditions.presenceOfElementLocated(SUBMIT_BUTTON)).click();
     }
 
-    private void sleep(int milliseconds) {
-        try {
-            Thread.sleep(milliseconds);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
+    private void waitForValidationFeedbackOnForm() {
+        wait.until(d -> hasValidationFeedback() || isOnOwnerPage());
+    }
+
+    private boolean isOnAddPetForm() {
+        String currentUrl = driver.getCurrentUrl();
+        return currentUrl != null
+                && (currentUrl.contains("/pets/new") || currentUrl.contains("/pets/add"));
+    }
+
+    private boolean isOnOwnerPage() {
+        String currentUrl = driver.getCurrentUrl();
+        return currentUrl != null && currentUrl.contains("/owners/1");
+    }
+
+    private boolean hasValidationFeedback() {
+        return !driver.findElements(VALIDATION_HELP_BLOCK).isEmpty()
+                || !driver.findElements(VALIDATION_ALERT_DANGER).isEmpty();
+    }
+
+    private void assertPageContains(String expectedText, String message) {
+        String pageSource = driver.getPageSource();
+        Assertions.assertTrue(pageSource != null && pageSource.contains(expectedText), message);
+    }
+
+    private void assertPageNotContains(String text, String message) {
+        String pageSource = driver.getPageSource();
+        Assertions.assertTrue(pageSource == null || !pageSource.contains(text), message);
     }
 }
