@@ -9,7 +9,7 @@ public class VisitsPage {
     private final WebDriver driver;
     private final WebDriverWait wait;
 
-    private static final int TIMEOUT_SECONDS = 10;
+    private static final int TIMEOUT_SECONDS = 5;
 
     public VisitsPage(WebDriver driver) {
         this.driver = driver;
@@ -50,7 +50,10 @@ public class VisitsPage {
 
 
     public void clickAddVisitButton(String petName) {
-        click(By.xpath(String.format(ADD_VISIT_BUTTON, petName)));
+        By locator = By.xpath(String.format(ADD_VISIT_BUTTON, petName));
+        WebElement el = wait.until(ExpectedConditions.presenceOfElementLocated(locator));
+        ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView({block:'center'});", el);
+        click(locator);
     }
 
     public void enterDate(String date) {
@@ -107,8 +110,8 @@ public class VisitsPage {
     public void clearDescriptionInput() {
         find(DESCRIPTION_INPUT).clear();
     }
+
+    public void waitForAddVisitButton(String petName) {
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath(String.format(ADD_VISIT_BUTTON, petName))));
+    }
 }
-
-
-
-

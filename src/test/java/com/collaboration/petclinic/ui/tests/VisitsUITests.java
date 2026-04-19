@@ -19,6 +19,8 @@ public class VisitsUITests extends BaseTest {
     void setup() {
         driver.get(BASE_URL + OWNER_URL + OWNER_ID);
         visitsPage = new VisitsPage(driver);
+        // Wait for page to load by checking for Add Visit button
+        visitsPage.waitForAddVisitButton(PET_NAME);
     }
 
     // Helper to reduce duplication
@@ -114,5 +116,3 @@ public class VisitsUITests extends BaseTest {
         assertTrue(visitsPage.waitForVisitDelete("CRUD Updated"));
     }
 }
-
-
