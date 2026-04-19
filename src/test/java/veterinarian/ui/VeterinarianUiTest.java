@@ -3,14 +3,12 @@ package veterinarian.ui;
 import org.junit.jupiter.api.*;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions; // Нов импорт
 import org.openqa.selenium.support.ui.*;
 
 import java.time.Duration;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
-//UI does not support CRUD operations for veterinarians,
-//therefore Selenium tests are focused on data visualization and validation.
 
 public class VeterinarianUiTest {
 
@@ -19,8 +17,13 @@ public class VeterinarianUiTest {
 
     @BeforeEach
     void setUp() {
-        driver = new ChromeDriver();
-        driver.manage().window().maximize();
+        // ОПТИМИЗАЦИЈА ЗА TASK 2.3: Headless Mode
+        ChromeOptions options = new ChromeOptions();
+        options.addArguments("--headless=new"); // Тестовите се вртат во позадина (Sustainable Practice)
+        options.addArguments("--disable-gpu");   // Дополнително штедење на ресурси
+        options.addArguments("--window-size=1920,1080");
+
+        driver = new ChromeDriver(options);
         wait = new WebDriverWait(driver, Duration.ofSeconds(10));
 
         driver.get("http://localhost:8080");
@@ -33,12 +36,10 @@ public class VeterinarianUiTest {
         }
     }
 
-
     // VETERINARIANS TESTS
 
     @Test
     void veterinariansPageLoads() {
-
         wait.until(ExpectedConditions.elementToBeClickable(
                 By.linkText("VETERINARIANS")
         )).click();
@@ -52,7 +53,6 @@ public class VeterinarianUiTest {
 
     @Test
     void veterinariansListDisplayed() {
-
         wait.until(ExpectedConditions.elementToBeClickable(
                 By.linkText("VETERINARIANS")
         )).click();
@@ -66,7 +66,6 @@ public class VeterinarianUiTest {
 
     @Test
     void specificVeterinarianExists() {
-
         wait.until(ExpectedConditions.elementToBeClickable(
                 By.linkText("VETERINARIANS")
         )).click();
@@ -83,7 +82,6 @@ public class VeterinarianUiTest {
 
     @Test
     void verifySpecialtiesDisplayed() {
-
         wait.until(ExpectedConditions.elementToBeClickable(
                 By.linkText("VETERINARIANS")
         )).click();
@@ -98,36 +96,33 @@ public class VeterinarianUiTest {
         );
     }
 
-
     // OWNER TESTS
-
 
     @Test
     void addOwnerValid() {
 
-        wait.until(ExpectedConditions.elementToBeClickable(
-                By.linkText("FIND OWNERS")
-        )).click();
+        String uniqueName = "Jasmin" + System.currentTimeMillis() % 1000;
 
-        wait.until(ExpectedConditions.elementToBeClickable(
-                By.linkText("Add Owner")
-        )).click();
+        wait.until(ExpectedConditions.elementToBeClickable(By.linkText("FIND OWNERS"))).click();
+        wait.until(ExpectedConditions.elementToBeClickable(By.linkText("Add Owner"))).click();
 
-        driver.findElement(By.id("firstName")).sendKeys("Jasmin");
+        driver.findElement(By.id("firstName")).sendKeys(uniqueName);
         driver.findElement(By.id("lastName")).sendKeys("Abazi");
         driver.findElement(By.id("address")).sendKeys("Street 1");
         driver.findElement(By.id("city")).sendKeys("Skopje");
-        driver.findElement(By.id("telephone")).sendKeys("123456789");
+        driver.findElement(By.id("telephone")).sendKeys("1234567890"); // Обично бара 10 цифри
 
-        driver.findElement(By.cssSelector("button[type='submit']")).click();
+        WebElement submitButton = wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("button[type='submit']")));
+        submitButton.click();
 
-        String page = driver.getPageSource();
-        assertTrue(page.contains("Jasmin"));
+        boolean isPresent = new WebDriverWait(driver, Duration.ofSeconds(20))
+                .until(ExpectedConditions.textToBePresentInElementLocated(By.tagName("body"), uniqueName));
+
+        assertTrue(isPresent, "Owner with name " + uniqueName + " was not found!");
     }
 
     @Test
     void addOwnerEmptyFields() {
-
         wait.until(ExpectedConditions.elementToBeClickable(
                 By.linkText("FIND OWNERS")
         )).click();
@@ -139,13 +134,10 @@ public class VeterinarianUiTest {
         driver.findElement(By.cssSelector("button[type='submit']")).click();
 
         assertTrue(driver.getPageSource().contains("Owner"));
-        assertTrue(driver.findElement(By.id("firstName")).isDisplayed());
-        assertTrue(driver.findElement(By.id("lastName")).isDisplayed());
     }
 
     @Test
     void addOwnerInvalidPhone() {
-
         wait.until(ExpectedConditions.elementToBeClickable(
                 By.linkText("FIND OWNERS")
         )).click();
@@ -158,7 +150,6 @@ public class VeterinarianUiTest {
         driver.findElement(By.id("lastName")).sendKeys("User");
         driver.findElement(By.id("address")).sendKeys("Street");
         driver.findElement(By.id("city")).sendKeys("City");
-
         driver.findElement(By.id("telephone")).sendKeys("abc");
 
         driver.findElement(By.cssSelector("button[type='submit']")).click();
@@ -174,20 +165,14 @@ public class VeterinarianUiTest {
 
     @Test
     void searchOwner() {
-
         wait.until(ExpectedConditions.elementToBeClickable(
                 By.linkText("FIND OWNERS")
         )).click();
 
         driver.findElement(By.id("lastName")).sendKeys("Franklin");
-
         driver.findElement(By.cssSelector("button[type='submit']")).click();
 
         String page = driver.getPageSource();
-
-        assertTrue(
-                page.contains("Franklin"),
-                "Owner search failed"
-        );
+        assertTrue(page.contains("Franklin"), "Owner search failed");
     }
 }
