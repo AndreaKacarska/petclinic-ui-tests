@@ -9,34 +9,7 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 import java.time.Duration;
 import java.time.LocalDate;
 
-/**
- * UI TESTS — Add Pet for Specific Owner
- * Student 3
- * Prerequisites:
- * - Backend running on localhost:9966
- * - Frontend running on localhost:4200
- * - Owner with ID 1 (George Franklin) exists
- *
- * KNOWN BUGS IDENTIFIED DURING TESTING:
- *
- * BUG002: No error message shown when future birth date is entered
- *   - Steps: Navigate to Add Pet form, enter future date, click Save
- *   - Expected: Error message "Birth date cannot be in the future"
- *   - Actual: Form silently refuses to submit, no feedback to user
- *   - Test: TC003_BUG (intentionally failing to document this bug)
- *
- * BUG003: Required fields show no validation messages on empty submit
- *   - Steps: Navigate to Add Pet form, leave fields empty, click Save
- *   - Expected: Each field shows "This field is required"
- *   - Actual: Nothing happens, no messages shown
- *
- * BUG004: Pet name accepts special characters and numbers
- *   - Needs clarification from team whether this is intended behavior
- *
- * BUG005: Duplicate pet names allowed for same owner
- *   - Needs clarification from team whether this is intended behavior
- *
- */
+//optimized
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class PetUITests extends BaseTest {
 
@@ -56,7 +29,7 @@ public class PetUITests extends BaseTest {
         fillForm("BuddyUI", "2022/05/15", "dog");
         submitForm();
 
-        sleep(2000);
+        wait.until(ExpectedConditions.urlContains("/owners/1"));
         navigateToOwner1();
         Assertions.assertTrue(
                 driver.getPageSource().contains("BuddyUI"),
@@ -74,7 +47,7 @@ public class PetUITests extends BaseTest {
         fillForm("RexUI", today, "cat");
         submitForm();
 
-        sleep(2000);
+        wait.until(ExpectedConditions.urlContains("/owners/1"));
         navigateToOwner1();
         Assertions.assertTrue(
                 driver.getPageSource().contains("RexUI"),
@@ -93,9 +66,9 @@ public class PetUITests extends BaseTest {
         fillForm("#!@123", "2024/01/15", "bird");
         submitForm();
 
-        sleep(3000);
+        wait.until(ExpectedConditions.urlContains("/owners/1"));
         navigateToOwner1();
-        sleep(2000);
+        waitForPageLoad();
         Assertions.assertTrue(
                 driver.getPageSource().contains("123"),
                 "System currently allows special characters - needs clarification BUG004"
@@ -112,7 +85,7 @@ public class PetUITests extends BaseTest {
         fillForm("BellaUI", "2024/01/15", "cat");
         submitForm();
 
-        sleep(2000);
+        wait.until(ExpectedConditions.urlContains("/owners/1"));
         navigateToOwner1();
         Assertions.assertTrue(
                 driver.getPageSource().contains("BellaUI"),
@@ -169,7 +142,7 @@ public class PetUITests extends BaseTest {
     void testViewExistingPet() {
         navigateToOwner1();
 
-        sleep(3000);
+        waitForPageLoad();
         String pageSource = driver.getPageSource();
         Assertions.assertTrue(
                 pageSource.contains("Franklin") ||
@@ -208,14 +181,14 @@ public class PetUITests extends BaseTest {
     @DisplayName("TC014 - Delete a pet")
     void testDeletePet() {
         navigateToOwner1();
-        sleep(2000);
+        waitForPageLoad();
 
         WebElement deleteBtn = wait.until(ExpectedConditions.presenceOfElementLocated(
                 By.xpath("(//button[contains(text(),'Delete Pet')])[1]")));
 
         ((org.openqa.selenium.JavascriptExecutor) driver)
                 .executeScript("arguments[0].scrollIntoView(true);", deleteBtn);
-        sleep(500);
+        wait.until(ExpectedConditions.elementToBeClickable(deleteBtn));
 
         int petCountBefore = driver.findElements(
                 By.xpath("//button[contains(text(),'Delete Pet')]")).size();
@@ -223,9 +196,9 @@ public class PetUITests extends BaseTest {
         ((org.openqa.selenium.JavascriptExecutor) driver)
                 .executeScript("arguments[0].click();", deleteBtn);
 
-        sleep(2000);
+        wait.until(ExpectedConditions.urlContains("/owners/1"));
         navigateToOwner1();
-        sleep(1000);
+        waitForPageLoad();
 
         int petCountAfter = driver.findElements(
                 By.xpath("//button[contains(text(),'Delete Pet')]")).size();
@@ -247,7 +220,7 @@ public class PetUITests extends BaseTest {
         clickAddNewPet();
         fillForm("Futuristico", "2029/01/01", "dog");
         submitForm();
-        sleep(1000);
+        waitForPageLoad();
 
         WebElement errorMessage = wait.until(
                 ExpectedConditions.visibilityOfElementLocated(
@@ -292,12 +265,7 @@ public class PetUITests extends BaseTest {
     private void submitForm() {
         driver.findElement(By.xpath("//button[@type='submit']")).click();
     }
-
-    private void sleep(int milliseconds) {
-        try {
-            Thread.sleep(milliseconds);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
+    private void waitForPageLoad() {
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.tagName("body")));
     }
 }
