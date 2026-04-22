@@ -1,9 +1,0 @@
-com.collaboration.petclinic.ui.tests.PetUITests.sleep,0.0000
-com.collaboration.petclinic.ui.tests.HomeTest.homePageLoads,0.0000
-com.collaboration.petclinic.ui.tests.PetUITests.testEmptyNameValidation,0.0000
-com.collaboration.petclinic.ui.base.BaseTest.tearDown,0.0000
-com.collaboration.petclinic.ui.tests.PetUITests.clickAddNewPet,0.0000
-com.collaboration.petclinic.ui.tests.PetUITests.testFutureDateShouldShowErrorMessage,0.0000
-com.collaboration.petclinic.ui.base.BaseTest.setUp,0.0000
-com.collaboration.petclinic.ui.tests.PetUITests.testEditPet,0.0000
-com.collaboration.petclinic.ui.tests.PetUITests.fillForm,0.0000
