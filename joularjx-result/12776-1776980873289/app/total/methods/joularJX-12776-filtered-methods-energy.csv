@@ -1,0 +1,11 @@
+com.collaboration.petclinic.ui.tests.AddOwnerTest.fillForm,0.0000
+com.collaboration.petclinic.ui.tests.AddOwnerTest.element,0.0000
+com.collaboration.petclinic.ui.tests.AddOwnerTest.TS08_inputFormatValidation,0.0000
+com.collaboration.petclinic.ui.base.BaseTest.tearDown,0.0000
+com.collaboration.petclinic.ui.tests.AddOwnerTest.navigateToAddOwner,0.0000
+com.collaboration.petclinic.ui.base.BaseTest.setUp,0.0000
+com.collaboration.petclinic.ui.tests.AddOwnerTest.assertPageContains,0.0000
+com.collaboration.petclinic.ui.tests.AddOwnerTest.TS19_errorMessagePlacement,0.0000
+com.collaboration.petclinic.ui.tests.AddOwnerTest.TS18_errorMessagesVisible,0.0000
+com.collaboration.petclinic.ui.tests.AddOwnerTest.lambda$waitForPageSourceContains$0,0.0000
+com.collaboration.petclinic.ui.tests.AddOwnerTest.waitForPageSourceContains,0.0000

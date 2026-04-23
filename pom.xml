@@ -40,19 +40,6 @@
     </dependencies>
     <build>
         <plugins>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.2.5</version>
-                <configuration>
-                    <argLine>
-                        -javaagent:C:/Users/Andrej/JoularJX/joularjx-3.1.0.jar=output=./joular-output
-                    </argLine>
-                    <parallel>none</parallel>
-                </configuration>
-            </plugin>
-
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
