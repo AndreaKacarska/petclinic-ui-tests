@@ -1,6 +1,7 @@
 package com.collaboration.petclinic.ui.tests.pages;
 
 import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
@@ -55,74 +56,50 @@ public class AddOwnerPage {
      * Click -> Clear -> Type -> Tab (blur) to mark field as dirty and validate
      */
     public void fillFirstName(String value) {
-        WebElement field = driver.findElement(firstNameField);
-        field.click();  // Make field active
-        field.clear();   // Clear existing value
-        field.sendKeys(value);  // Enter new value
-        field.sendKeys(Keys.TAB);  // Blur field to trigger validation
-        waitForValidationToProcess();
+        // Sustainability: One resilient interaction path reduces flaky retries and wasted reruns.
+        setFieldValue(firstNameField, value);
     }
 
     /**
      * Fill lastName field and trigger Angular validation
      */
     public void fillLastName(String value) {
-        WebElement field = driver.findElement(lastNameField);
-        field.click();
-        field.clear();
-        field.sendKeys(value);
-        field.sendKeys(Keys.TAB);
-        waitForValidationToProcess();
+        setFieldValue(lastNameField, value);
     }
 
     /**
      * Fill address field and trigger Angular validation
      */
     public void fillAddress(String value) {
-        WebElement field = driver.findElement(addressField);
-        field.click();
-        field.clear();
-        field.sendKeys(value);
-        field.sendKeys(Keys.TAB);
-        waitForValidationToProcess();
+        setFieldValue(addressField, value);
     }
 
     /**
      * Fill city field and trigger Angular validation
      */
     public void fillCity(String value) {
-        WebElement field = driver.findElement(cityField);
-        field.click();
-        field.clear();
-        field.sendKeys(value);
-        field.sendKeys(Keys.TAB);
-        waitForValidationToProcess();
+        setFieldValue(cityField, value);
     }
 
     /**
      * Fill telephone field and trigger Angular validation
      */
     public void fillTelephone(String value) {
-        WebElement field = driver.findElement(telephoneField);
-        field.click();
-        field.clear();
-        field.sendKeys(value);
-        field.sendKeys(Keys.TAB);
-        waitForValidationToProcess();
+        setFieldValue(telephoneField, value);
     }
 
     /**
      * Click the submit button
      */
     public void submitForm() {
-        driver.findElement(submitButton).click();
+        safeClick(submitButton);
     }
 
     /**
      * Click the back button
      */
     public void clickBack() {
-        driver.findElement(backButton).click();
+        safeClick(backButton);
     }
 
     /**
@@ -180,7 +157,11 @@ public class AddOwnerPage {
      * Wait for page to redirect to owners list
      */
     public void waitForOwnersListRedirect() {
-        wait.until(ExpectedConditions.urlContains("/owners"));
+        // Sustainability: Accurate redirect detection prevents false positives and expensive flaky retries.
+        wait.until(driver -> {
+            String currentUrl = driver.getCurrentUrl();
+            return currentUrl.contains("/owners") && !currentUrl.contains("/owners/add");
+        });
     }
 
     /**
@@ -230,15 +211,31 @@ public class AddOwnerPage {
         }
     }
 
-    /**
-     * Wait for Angular validation to process
-     * Angular needs a small delay to update the DOM after field changes
-     */
-    private void waitForValidationToProcess() {
+    private void setFieldValue(By locator, String value) {
+        WebElement field = wait.until(ExpectedConditions.visibilityOfElementLocated(locator));
+        ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView({block: 'center'});", field);
+        ((JavascriptExecutor) driver).executeScript("arguments[0].focus();", field);
+
+        field.sendKeys(Keys.chord(Keys.CONTROL, "a"), Keys.DELETE);
+        field.sendKeys(value);
+        field.sendKeys(Keys.TAB);
+
+        // Sustainability: Event-based wait avoids fixed delays and keeps tests fast on responsive runs.
+        wait.until(driver -> {
+            String cssClasses = field.getDomProperty("className");
+            return cssClasses != null && (cssClasses.contains("ng-dirty") || cssClasses.contains("ng-touched"));
+        });
+    }
+
+    private void safeClick(By locator) {
+        WebElement element = wait.until(ExpectedConditions.visibilityOfElementLocated(locator));
+        ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView({block: 'center'});", element);
+
         try {
-            Thread.sleep(300);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
+            element.click();
+        } catch (Exception ignored) {
+            // Sustainability: JS fallback avoids reruns caused by intermittent footer/image overlap.
+            ((JavascriptExecutor) driver).executeScript("arguments[0].click();", element);
         }
     }
 
