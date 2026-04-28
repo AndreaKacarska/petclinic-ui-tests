@@ -298,7 +298,7 @@ function renderDashboard(rows){
   makeChart("chart-duration","bar",shortLabels,[{data:duration,label:"Duration",backgroundColor:b+"cc",borderRadius:4,borderSkipped:false}]);
 
 
-  const UI_TESTS_PER_RUN = 21;
+  const UI_TESTS_PER_RUN = 41;
   document.getElementById("table-body").innerHTML = rows.map(function(r, i) {
     const em = emissions[i];
     const en = energy[i];

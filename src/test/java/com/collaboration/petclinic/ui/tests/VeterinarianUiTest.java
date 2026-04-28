@@ -1,4 +1,4 @@
-package veterinarian.ui;
+package com.collaboration.petclinic.ui.tests;
 
 import org.junit.jupiter.api.*;
 import org.openqa.selenium.*;
@@ -26,7 +26,7 @@ public class VeterinarianUiTest {
         driver = new ChromeDriver(options);
         wait = new WebDriverWait(driver, Duration.ofSeconds(10));
 
-        driver.get("http://localhost:8080");
+        driver.get("http://localhost:4200/vets");
     }
 
     @AfterEach

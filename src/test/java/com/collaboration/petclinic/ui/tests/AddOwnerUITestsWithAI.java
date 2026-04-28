@@ -1,7 +1,7 @@
 package com.collaboration.petclinic.ui.tests;
 
 import com.collaboration.petclinic.ui.base.BaseTest;
-import com.collaboration.petclinic.ui.tests.pages.AddOwnerPage;
+import com.collaboration.petclinic.ui.pages.AddOwnerPage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
